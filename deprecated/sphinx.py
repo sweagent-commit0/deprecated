@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 Sphinx directive integration
 ============================
@@ -21,12 +20,9 @@ when the function/method is called or the class is constructed.
 """
 import re
 import textwrap
-
 import wrapt
-
 from deprecated.classic import ClassicAdapter
 from deprecated.classic import deprecated as _classic_deprecated
-
 
 class SphinxAdapter(ClassicAdapter):
     """
@@ -41,15 +37,7 @@ class SphinxAdapter(ClassicAdapter):
     - The reason message is obviously added in the directive block if not empty.
     """
 
-    def __init__(
-        self,
-        directive,
-        reason="",
-        version="",
-        action=None,
-        category=DeprecationWarning,
-        line_length=70,
-    ):
+    def __init__(self, directive, reason='', version='', action=None, category=DeprecationWarning, line_length=70):
         """
         Construct a wrapper adapter.
 
@@ -85,7 +73,6 @@ class SphinxAdapter(ClassicAdapter):
             Max line length of the directive text. If non nul, a long text is wrapped in several lines.
         """
         if not version:
-            # https://github.com/tantale/deprecated/issues/40
             raise ValueError("'version' argument is required in Sphinx directives")
         self.directive = directive
         self.line_length = line_length
@@ -99,42 +86,26 @@ class SphinxAdapter(ClassicAdapter):
 
         :return: the decorated class or function.
         """
-        # -- build the directive division
-        fmt = ".. {directive}:: {version}" if self.version else ".. {directive}::"
+        fmt = '.. {directive}:: {version}' if self.version else '.. {directive}::'
         div_lines = [fmt.format(directive=self.directive, version=self.version)]
         width = self.line_length - 3 if self.line_length > 3 else 2 ** 16
         reason = textwrap.dedent(self.reason).strip()
         for paragraph in reason.splitlines():
             if paragraph:
-                div_lines.extend(
-                    textwrap.fill(
-                        paragraph,
-                        width=width,
-                        initial_indent="   ",
-                        subsequent_indent="   ",
-                    ).splitlines()
-                )
+                div_lines.extend(textwrap.fill(paragraph, width=width, initial_indent='   ', subsequent_indent='   ').splitlines())
             else:
-                div_lines.append("")
-
-        # -- get the docstring, normalize the trailing newlines
-        # keep a consistent behaviour if the docstring starts with newline or directly on the first one
-        docstring = wrapped.__doc__ or ""
-        lines = docstring.splitlines(keepends=True) or [""]
-        docstring = textwrap.dedent("".join(lines[1:])) if len(lines) > 1 else ""
+                div_lines.append('')
+        docstring = wrapped.__doc__ or ''
+        lines = docstring.splitlines(keepends=True) or ['']
+        docstring = textwrap.dedent(''.join(lines[1:])) if len(lines) > 1 else ''
         docstring = lines[0] + docstring
         if docstring:
-            # An empty line must separate the original docstring and the directive.
-            docstring = re.sub(r"\n+$", "", docstring, flags=re.DOTALL) + "\n\n"
+            docstring = re.sub('\\n+$', '', docstring, flags=re.DOTALL) + '\n\n'
         else:
-            # Avoid "Explicit markup ends without a blank line" when the decorated function has no docstring
-            docstring = "\n"
-
-        # -- append the directive division to the docstring
-        docstring += "".join("{}\n".format(line) for line in div_lines)
-
+            docstring = '\n'
+        docstring += ''.join(('{}\n'.format(line) for line in div_lines))
         wrapped.__doc__ = docstring
-        if self.directive in {"versionadded", "versionchanged"}:
+        if self.directive in {'versionadded', 'versionchanged'}:
             return wrapped
         return super(SphinxAdapter, self).__call__(wrapped)
 
@@ -152,15 +123,9 @@ class SphinxAdapter(ClassicAdapter):
            Strip Sphinx cross-referencing syntax from warning message.
 
         """
-        msg = super(SphinxAdapter, self).get_deprecated_msg(wrapped, instance)
-        # Strip Sphinx cross reference syntax (like ":function:", ":py:func:" and ":py:meth:")
-        # Possible values are ":role:`foo`", ":domain:role:`foo`"
-        # where ``role`` and ``domain`` should match "[a-zA-Z]+"
-        msg = re.sub(r"(?: : [a-zA-Z]+ )? : [a-zA-Z]+ : (`[^`]*`)", r"\1", msg, flags=re.X)
-        return msg
+        pass
 
-
-def versionadded(reason="", version="", line_length=70):
+def versionadded(reason='', version='', line_length=70):
     """
     This decorator can be used to insert a "versionadded" directive
     in your function/class docstring in order to documents the
@@ -181,16 +146,9 @@ def versionadded(reason="", version="", line_length=70):
 
     :return: the decorated function.
     """
-    adapter = SphinxAdapter(
-        'versionadded',
-        reason=reason,
-        version=version,
-        line_length=line_length,
-    )
-    return adapter
+    pass
 
-
-def versionchanged(reason="", version="", line_length=70):
+def versionchanged(reason='', version='', line_length=70):
     """
     This decorator can be used to insert a "versionchanged" directive
     in your function/class docstring in order to documents the
@@ -210,16 +168,9 @@ def versionchanged(reason="", version="", line_length=70):
 
     :return: the decorated function.
     """
-    adapter = SphinxAdapter(
-        'versionchanged',
-        reason=reason,
-        version=version,
-        line_length=line_length,
-    )
-    return adapter
+    pass
 
-
-def deprecated(reason="", version="", line_length=70, **kwargs):
+def deprecated(reason='', version='', line_length=70, **kwargs):
     """
     This decorator can be used to insert a "deprecated" directive
     in your function/class docstring in order to documents the
@@ -254,9 +205,4 @@ def deprecated(reason="", version="", line_length=70, **kwargs):
     .. versionchanged:: 1.2.13
        Change the signature of the decorator to reflect the valid use cases.
     """
-    directive = kwargs.pop('directive', 'deprecated')
-    adapter_cls = kwargs.pop('adapter_cls', SphinxAdapter)
-    kwargs["reason"] = reason
-    kwargs["version"] = version
-    kwargs["line_length"] = line_length
-    return _classic_deprecated(directive=directive, adapter_cls=adapter_cls, **kwargs)
+    pass

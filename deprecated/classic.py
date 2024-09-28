@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Classic deprecation warning
 ===========================
@@ -11,26 +10,18 @@ import functools
 import inspect
 import platform
 import warnings
-
 import wrapt
-
 try:
-    # If the C extension for wrapt was compiled and wrapt/_wrappers.pyd exists, then the
-    # stack level that should be passed to warnings.warn should be 2. However, if using
-    # a pure python wrapt, a extra stacklevel is required.
     import wrapt._wrappers
-
     _routine_stacklevel = 2
     _class_stacklevel = 2
 except ImportError:
     _routine_stacklevel = 3
-    if platform.python_implementation() == "PyPy":
+    if platform.python_implementation() == 'PyPy':
         _class_stacklevel = 2
     else:
         _class_stacklevel = 3
-
 string_types = (type(b''), type(u''))
-
 
 class ClassicAdapter(wrapt.AdapterFactory):
     """
@@ -83,7 +74,7 @@ class ClassicAdapter(wrapt.AdapterFactory):
            return x + y
     """
 
-    def __init__(self, reason="", version="", action=None, category=DeprecationWarning):
+    def __init__(self, reason='', version='', action=None, category=DeprecationWarning):
         """
         Construct a wrapper adapter.
 
@@ -110,8 +101,8 @@ class ClassicAdapter(wrapt.AdapterFactory):
             By default, the category class is :class:`~DeprecationWarning`,
             you can inherit this class to define your own deprecation warning category.
         """
-        self.reason = reason or ""
-        self.version = version or ""
+        self.reason = reason or ''
+        self.version = version or ''
         self.action = action
         self.category = category
         super(ClassicAdapter, self).__init__()
@@ -126,21 +117,7 @@ class ClassicAdapter(wrapt.AdapterFactory):
 
         :return: The warning message.
         """
-        if instance is None:
-            if inspect.isclass(wrapped):
-                fmt = "Call to deprecated class {name}."
-            else:
-                fmt = "Call to deprecated function (or staticmethod) {name}."
-        else:
-            if inspect.isclass(instance):
-                fmt = "Call to deprecated class method {name}."
-            else:
-                fmt = "Call to deprecated method {name}."
-        if self.reason:
-            fmt += " ({reason})"
-        if self.version:
-            fmt += " -- Deprecated since version {version}."
-        return fmt.format(name=wrapped.__name__, reason=self.reason or "", version=self.version or "")
+        pass
 
     def __call__(self, wrapped):
         """
@@ -169,13 +146,9 @@ class ClassicAdapter(wrapt.AdapterFactory):
                     warnings.warn(msg, category=self.category, stacklevel=_class_stacklevel)
                 if old_new1 is object.__new__:
                     return old_new1(cls)
-                # actually, we don't know the real signature of *old_new1*
                 return old_new1(cls, *args, **kwargs)
-
             wrapped.__new__ = staticmethod(wrapped_cls)
-
         return wrapped
-
 
 def deprecated(*args, **kwargs):
     """
@@ -253,40 +226,4 @@ def deprecated(*args, **kwargs):
            return x + y
 
     """
-    if args and isinstance(args[0], string_types):
-        kwargs['reason'] = args[0]
-        args = args[1:]
-
-    if args and not callable(args[0]):
-        raise TypeError(repr(type(args[0])))
-
-    if args:
-        action = kwargs.get('action')
-        category = kwargs.get('category', DeprecationWarning)
-        adapter_cls = kwargs.pop('adapter_cls', ClassicAdapter)
-        adapter = adapter_cls(**kwargs)
-
-        wrapped = args[0]
-        if inspect.isclass(wrapped):
-            wrapped = adapter(wrapped)
-            return wrapped
-
-        elif inspect.isroutine(wrapped):
-
-            @wrapt.decorator(adapter=adapter)
-            def wrapper_function(wrapped_, instance_, args_, kwargs_):
-                msg = adapter.get_deprecated_msg(wrapped_, instance_)
-                if action:
-                    with warnings.catch_warnings():
-                        warnings.simplefilter(action, category)
-                        warnings.warn(msg, category=category, stacklevel=_routine_stacklevel)
-                else:
-                    warnings.warn(msg, category=category, stacklevel=_routine_stacklevel)
-                return wrapped_(*args_, **kwargs_)
-
-            return wrapper_function(wrapped)
-
-        else:
-            raise TypeError(repr(type(wrapped)))
-
-    return functools.partial(deprecated, **kwargs)
+    pass
